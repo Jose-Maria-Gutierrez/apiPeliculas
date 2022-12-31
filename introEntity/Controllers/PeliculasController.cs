@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using introEntity.DTOs;
 using introEntity.Entidades;
+using introEntity.UoW;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,80 +11,53 @@ namespace introEntity.Controllers
     [Route("api/peliculas")]
     public class PeliculasController : ControllerBase
     {
-        private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
+        private readonly IUnitOfWork unitOfWork;
 
-        public PeliculasController(ApplicationDbContext context, IMapper mapper)
+        public PeliculasController(IMapper mapper, IUnitOfWork unitOfWork)
         {
-            this.context = context;
             this.mapper = mapper;
+            this.unitOfWork = unitOfWork;
         }
 
         [HttpPost]
         public async Task<ActionResult> Post(PeliculaDTO peliculaDTO)
         {
             var pelicula = mapper.Map<Pelicula>(peliculaDTO);
-            if (pelicula.Generos is not null)
-            {
-                foreach (var genero in pelicula.Generos)
-                {
-                    context.Entry(genero).State = EntityState.Unchanged; //que no cree nuevos generos pq no se usa tabla intermedia
-                }
-            }
-            if (pelicula.PeliculasActores is not null)
-            {
-                for (int i = 0; i < pelicula.PeliculasActores.Count; i++)
-                {
-                    pelicula.PeliculasActores[i].Orden = i + 1;
-                }
-            }
-            context.Add(pelicula);
-            await context.SaveChangesAsync();
+            await this.unitOfWork.peliculaRepository.agregarPeliculaCascada(pelicula);
+            await this.unitOfWork.saveChanges();
             return Ok();
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Pelicula>> Get(int id)
         {
-            var pelicula = await context.Peliculas.Include(p => p.Comentarios).Include(p => p.Generos)
-                .Include(p => p.PeliculasActores.OrderBy(pa => pa.Orden))
-                .ThenInclude(pa => pa.Actor) //desde PeliculasActores a Actor
-                .FirstOrDefaultAsync(p => p.Id == id);
-            if (pelicula == null)
+            var pelicula = this.unitOfWork.peliculaRepository.getPelicula(id);
+            if(pelicula==null)                
                 return NotFound();
-            return pelicula;
+            return Ok(pelicula.Result);
         }
 
         [HttpGet("select/{id:int}")]
-        public async Task<ActionResult> GetSelect(int id)
+        public async Task<ActionResult<PeliculaRespuestaDTO>> GetSelect(int id)
         {
-            var pelicula = await context.Peliculas
-                .Select(pel => new
-                {
-                    pel.Id,
-                    pel.Titulo,
-                    Generos = pel.Generos.Select(g => g.Nombre).ToList(),
-                    Actores = pel.PeliculasActores.OrderBy(pa => pa.Orden).Select(pa =>
-                    new{
-                        Id = pa.ActorId,
-                        pa.Actor.Nombre,
-                        pa.Personaje
-                    }),
-                    CantidadComentarios = pel.Comentarios.Count()
-                }).FirstOrDefaultAsync(p => p.Id == id);
-
+            var pelicula = this.unitOfWork.peliculaRepository.getPelicula(id); //no hacia el include de todas las demas clases
             if (pelicula == null)
                 return NotFound();
-            return Ok(pelicula);
+            PeliculaRespuestaDTO resp = this.mapper.Map<PeliculaRespuestaDTO>(pelicula.Result);
+            return Ok(resp); //probar este
         }
 
         [HttpDelete("{id:int}/moderna")]
         public async Task<ActionResult> Delete(int id)
         {
-            var filasAlteradas = await context.Peliculas.Where(g => g.Id == id).ExecuteDeleteAsync(); //borra en cascada
-            if (filasAlteradas == 0)
-                return NotFound();
-            return Ok();
+            using (this.unitOfWork)
+            {
+                var filasAlteradas = this.unitOfWork.peliculaRepository.eliminarPorId(id); //borra en cascada
+                if (filasAlteradas.Result == 0)
+                    return NotFound();
+                return Ok();
+            }
         }
     }
 }

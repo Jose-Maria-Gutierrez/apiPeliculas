@@ -1,4 +1,6 @@
 using introEntity;
+using introEntity.Repositorios;
+using introEntity.UoW;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +13,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(opciones=>opciones.UseSqlServer("name=SQL"));
+
+builder.Services.AddTransient<IPeliculaRepository, PeliculaRepository>();
+builder.Services.AddTransient<IGeneroRepository, GeneroRepository>();
+builder.Services.AddTransient<IComentarioRepository,ComentarioRepository>();
+builder.Services.AddTransient<IActoresRepository, ActorRepository>();
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 

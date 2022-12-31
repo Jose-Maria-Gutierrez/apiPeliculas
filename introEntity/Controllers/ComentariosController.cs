@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using introEntity.DTOs;
 using introEntity.Entidades;
+using introEntity.UoW;
 using Microsoft.AspNetCore.Mvc;
 
 namespace introEntity.Controllers
@@ -9,24 +10,23 @@ namespace introEntity.Controllers
     [Route("api/peliculas/{peliculaId:int}/comentarios")]
     public class ComentariosController : ControllerBase
     {
-        private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
+        private readonly IUnitOfWork unitOfWork;
 
-        public ComentariosController(ApplicationDbContext context,IMapper mapper)
+        public ComentariosController(IMapper mapper,IUnitOfWork unitOfWork)
         {
-            this.context = context;
             this.mapper = mapper;
+            this.unitOfWork = unitOfWork;
         }
-
+        
         [HttpPost]
         public async Task<ActionResult> Post(int peliculaId,ComentarioDTO comentarioDTO)
         {
             var comentario = mapper.Map<Comentario>(comentarioDTO);
             comentario.PeliculaId = peliculaId;
-            context.Add(comentario);
-            await context.SaveChangesAsync();
+            await this.unitOfWork.comentarioRepository.add(comentario);
+            await this.unitOfWork.saveChanges();
             return Ok();
         }
-
     }
 }
