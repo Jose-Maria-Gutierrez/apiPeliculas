@@ -13,11 +13,13 @@ namespace introEntity.Controllers
     {
         private readonly IMapper mapper;
         private readonly IUnitOfWork unitOfWork;
+        private readonly ILogger<GenerosController> logger;
 
-        public GenerosController(IMapper mapper, IUnitOfWork unitOfWork)
+        public GenerosController(IMapper mapper, IUnitOfWork unitOfWork,ILogger<GenerosController> logger)
         {
             this.mapper = mapper;
             this.unitOfWork = unitOfWork;
+            this.logger = logger;
         }
 
         [HttpPost]
@@ -27,6 +29,7 @@ namespace introEntity.Controllers
                                                         //context.Add(genero);
             await this.unitOfWork.generoRepository.add(genero);
             await this.unitOfWork.saveChanges();
+            this.logger.LogInformation("se agrega nuevo genero");
             return Ok();
         }
 
@@ -36,12 +39,14 @@ namespace introEntity.Controllers
             var generos = mapper.Map<Genero[]>(generosDTO); //de DTO a clase
             await this.unitOfWork.generoRepository.agregarVarios(generos);
             await this.unitOfWork.saveChanges();
+            this.logger.LogInformation("se agregan varios generos");
             return Ok();
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Genero>>> Get()
         {
+            this.logger.LogInformation("se piden todos los generos");
             var res = this.unitOfWork.generoRepository.getAll();
             return Ok(res.Result);
         }
@@ -49,14 +54,12 @@ namespace introEntity.Controllers
         [HttpPut("{id:int}")]
         public async Task<ActionResult> Put(int id, GeneroDTO generoDTO) //actualizar
         {
-            using (this.unitOfWork)
-            {
-                Genero nuevo = mapper.Map<Genero>(generoDTO);
-                nuevo.Id = id;
-                this.unitOfWork.generoRepository.update(nuevo);
-                await this.unitOfWork.saveChanges();
-                return Ok();
-            }
+            Genero nuevo = mapper.Map<Genero>(generoDTO);
+            nuevo.Id = id;
+            this.unitOfWork.generoRepository.update(nuevo);
+            await this.unitOfWork.saveChanges();
+            this.logger.LogInformation($"se actualiza el genero id: {id}");
+            return Ok();
         }
 
         [HttpDelete("{id:int}/moderna")]
@@ -65,9 +68,13 @@ namespace introEntity.Controllers
             //await this.unitOfWork.context.Generos.Where(g => g.Id == id).ExecuteDeleteAsync
             var item = this.unitOfWork.generoRepository.getById(id);
             if (item == null)
+            {
+                this.logger.LogWarning($"no se encuentra id de genero para borrar: {id}");
                 return NotFound();
+            }
             this.unitOfWork.generoRepository.delete(item.Result);
             await this.unitOfWork.saveChanges();
+            this.logger.LogInformation($"se borra genero id: {id}");
             return Ok();
         }
     }

@@ -14,37 +14,38 @@ namespace introEntity.Controllers
     {
         private readonly IMapper mapper;
         private readonly IUnitOfWork unitOfWork;
+        private readonly ILogger<ActoresController> logger;
 
-        public ActoresController(IMapper mapper,IUnitOfWork unitOfWork)
+        public ActoresController(IMapper mapper,IUnitOfWork unitOfWork,ILogger<ActoresController> logger)
         {
             this.mapper = mapper;
             this.unitOfWork = unitOfWork;
+            this.logger = logger;
         }
         
         [HttpPost]
         public async Task<ActionResult> Post(ActorDTO actorDTO)
         {
-            using (this.unitOfWork)
-            {
-                var actor = mapper.Map<Actor>(actorDTO);
-                await this.unitOfWork.actorRepository.add(actor);
-                await this.unitOfWork.saveChanges();
-                return Ok();
-            }
+            var actor = mapper.Map<Actor>(actorDTO);
+            await this.unitOfWork.actorRepository.add(actor);
+            await this.unitOfWork.saveChanges();
+            this.logger.LogInformation("se agrega nuevo actor");
+            return Ok();
         }
         
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Actor>>> Get()
         {
             var resp = await this.unitOfWork.actorRepository.getAll();
+            this.logger.LogInformation("se pide listado de todos los actores");
             return Ok(resp);
-            //ordenados por nombre y dsp por fecha nacimiento
         }
         
         [HttpGet("nombre")]
         public async Task<ActionResult<IEnumerable<Actor>>> Get(string nombre) //el nombre tal cual
         {
             var resp = await this.unitOfWork.actorRepository.getNombre(nombre);
+            this.logger.LogInformation($"se pide actor/actores por nombre: {nombre}");
             return Ok(resp);
         }
         /*
@@ -60,8 +61,10 @@ namespace introEntity.Controllers
             var actor = await this.unitOfWork.actorRepository.getById(id);
             if (actor == null)
             {
+                this.logger.LogWarning($"se pide obtener un actor con id equivocado: {id}");
                 return NotFound();
             }
+            this.logger.LogInformation($"se pide un actor con id correcto: {id}");
             return actor;
         }
         /*

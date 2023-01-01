@@ -13,11 +13,13 @@ namespace introEntity.Controllers
     {
         private readonly IMapper mapper;
         private readonly IUnitOfWork unitOfWork;
+        private readonly ILogger<PeliculasController> logger;
 
-        public PeliculasController(IMapper mapper, IUnitOfWork unitOfWork)
+        public PeliculasController(IMapper mapper, IUnitOfWork unitOfWork,ILogger<PeliculasController> logger)
         {
             this.mapper = mapper;
             this.unitOfWork = unitOfWork;
+            this.logger = logger;
         }
 
         [HttpPost]
@@ -26,6 +28,7 @@ namespace introEntity.Controllers
             var pelicula = mapper.Map<Pelicula>(peliculaDTO);
             await this.unitOfWork.peliculaRepository.agregarPeliculaCascada(pelicula);
             await this.unitOfWork.saveChanges();
+            this.logger.LogInformation("se agrega nueva pelicula");
             return Ok();
         }
 
@@ -33,8 +36,12 @@ namespace introEntity.Controllers
         public async Task<ActionResult<Pelicula>> Get(int id)
         {
             var pelicula = this.unitOfWork.peliculaRepository.getPelicula(id);
-            if(pelicula==null)                
+            if (pelicula.Result == null)
+            {
+                this.logger.LogWarning($"no se encontro pelicula id: {id}");
                 return NotFound();
+            }
+            this.logger.LogInformation($"se pide pelicula id: {id}");
             return Ok(pelicula.Result);
         }
 
@@ -43,8 +50,12 @@ namespace introEntity.Controllers
         {
             var pelicula = this.unitOfWork.peliculaRepository.getPelicula(id); //no hacia el include de todas las demas clases
             if (pelicula == null)
+            {
+                this.logger.LogWarning($"no se encontro pelicula id: {id}");
                 return NotFound();
+            }
             PeliculaRespuestaDTO resp = this.mapper.Map<PeliculaRespuestaDTO>(pelicula.Result);
+            this.logger.LogInformation($"se encontro pelicula id: {id}");
             return Ok(resp); //probar este
         }
 
@@ -55,7 +66,11 @@ namespace introEntity.Controllers
             {
                 var filasAlteradas = this.unitOfWork.peliculaRepository.eliminarPorId(id); //borra en cascada
                 if (filasAlteradas.Result == 0)
+                {
+                    this.logger.LogWarning($"no se encontro pelicula para borrar id: {id}");
                     return NotFound();
+                }
+                this.logger.LogInformation($"se borra pelicula con id: {id}");
                 return Ok();
             }
         }

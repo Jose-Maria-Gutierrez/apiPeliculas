@@ -12,11 +12,13 @@ namespace introEntity.Controllers
     {
         private readonly IMapper mapper;
         private readonly IUnitOfWork unitOfWork;
+        private readonly ILogger<ComentariosController> logger;
 
-        public ComentariosController(IMapper mapper,IUnitOfWork unitOfWork)
+        public ComentariosController(IMapper mapper,IUnitOfWork unitOfWork,ILogger<ComentariosController> logger)
         {
             this.mapper = mapper;
             this.unitOfWork = unitOfWork;
+            this.logger = logger;
         }
         
         [HttpPost]
@@ -26,6 +28,7 @@ namespace introEntity.Controllers
             comentario.PeliculaId = peliculaId;
             await this.unitOfWork.comentarioRepository.add(comentario);
             await this.unitOfWork.saveChanges();
+            this.logger.LogInformation($"se agrega comentario para la pelicula: {peliculaId}");
             return Ok();
         }
     }
