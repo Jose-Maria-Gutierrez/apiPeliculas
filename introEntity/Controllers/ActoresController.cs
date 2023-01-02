@@ -3,11 +3,13 @@ using AutoMapper.QueryableExtensions;
 using introEntity.DTOs;
 using introEntity.Entidades;
 using introEntity.UoW;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace introEntity.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/actores")]
     public class ActoresController : ControllerBase
@@ -24,6 +26,7 @@ namespace introEntity.Controllers
         }
         
         [HttpPost]
+        [Authorize(Policy = "Administrador")]
         public async Task<ActionResult> Post(ActorDTO actorDTO)
         {
             var actor = mapper.Map<Actor>(actorDTO);

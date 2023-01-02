@@ -12,6 +12,7 @@ namespace introEntity.Utilidades
             CreateMap<ActorDTO, Actor>();
             CreateMap<Actor, ActorRespuestaDTO>();
             CreateMap<ComentarioDTO, Comentario>();
+            CreateMap<UsuarioRegistroDTO, Usuario>();
             CreateMap<PeliculaActorDTO, PeliculaActor>();
             CreateMap<PeliculaDTO, Pelicula>().ForMember(ent => ent.Generos,
                 dto => dto.MapFrom(campo => campo.Generos.Select(id => new Genero { Id = id })));

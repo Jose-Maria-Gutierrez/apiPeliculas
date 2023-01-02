@@ -8,6 +8,7 @@ namespace introEntity.UoW
         IGeneroRepository generoRepository { get; }
         IComentarioRepository comentarioRepository { get; }
         IActoresRepository actorRepository { get; }
+        IUsuarioRepository usuarioRepository { get; }
         Task saveChanges();
     }
 }

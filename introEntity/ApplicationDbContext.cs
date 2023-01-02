@@ -21,6 +21,6 @@ namespace introEntity
         public DbSet<Pelicula> Peliculas => Set<Pelicula>(); //con set creo el dbset de la clase genero
         public DbSet<Comentario> Comentarios => Set<Comentario>(); //con set creo el dbset de la clase genero
         public DbSet<PeliculaActor> PeliculasActores => Set<PeliculaActor>(); //con set creo el dbset de la clase 
-
-    }
+        public DbSet<Usuario> Usuarios => Set<Usuario>();
+     }
 }

@@ -9,15 +9,18 @@ namespace introEntity.UoW
         public IGeneroRepository generoRepository { get; }
         public IComentarioRepository comentarioRepository { get; }
         public IActoresRepository actorRepository { get; }
-       
+        public IUsuarioRepository usuarioRepository { get; }
+
         public UnitOfWork(ApplicationDbContext context, IPeliculaRepository peliculaRepo, 
-            IGeneroRepository generoRepository,IComentarioRepository comentarioRepository,IActoresRepository actoresRepository)
+            IGeneroRepository generoRepository,IComentarioRepository comentarioRepository,IActoresRepository actoresRepository,
+            IUsuarioRepository usuarioRepository)
         {
             this.context = context;
             this.peliculaRepository = peliculaRepo;
             this.generoRepository = generoRepository;
             this.comentarioRepository = comentarioRepository;
             this.actorRepository = actoresRepository;
+            this.usuarioRepository = usuarioRepository;
         }
 
         public void Dispose()
