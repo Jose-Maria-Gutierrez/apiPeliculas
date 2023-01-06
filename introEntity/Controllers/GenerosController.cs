@@ -2,6 +2,7 @@
 using introEntity.DTOs;
 using introEntity.Entidades;
 using introEntity.UoW;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,7 @@ namespace introEntity.Controllers
             this.logger = logger;
         }
 
+        //[Authorize]
         [HttpPost]
         public async Task<ActionResult> Post(GeneroDTO generoDTO)
         {
@@ -47,8 +49,18 @@ namespace introEntity.Controllers
         public async Task<ActionResult<IEnumerable<Genero>>> Get()
         {
             this.logger.LogInformation("se piden todos los generos");
-            var res = this.unitOfWork.generoRepository.getAll();
-            return Ok(res.Result);
+            var res = await this.unitOfWork.generoRepository.getAll();
+            return Ok(res);
+        }
+
+        //[Authorize(Policy = "Administrador")]
+        [Authorize]
+        [HttpGet("auto")]
+        public async Task<ActionResult<IEnumerable<Genero>>> GetAutorizado()
+        {
+            this.logger.LogInformation("se piden todos los generos");
+            var res = await this.unitOfWork.generoRepository.getAll();
+            return Ok(res);
         }
 
         [HttpPut("{id:int}")]
@@ -67,7 +79,7 @@ namespace introEntity.Controllers
         {
             //await this.unitOfWork.context.Generos.Where(g => g.Id == id).ExecuteDeleteAsync
             var item = this.unitOfWork.generoRepository.getById(id);
-            if (item == null)
+            if (item.Result == null)
             {
                 this.logger.LogWarning($"no se encuentra id de genero para borrar: {id}");
                 return NotFound();
